@@ -1,25 +1,39 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[6]:
+# In[7]:
 
 
+print("networkDiagx is running in Background..\nPlease Hold on!")
 import subprocess
+import speedtest
+import signal
 from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
-import speedtest
-import signal
-
 
 def run_ping(destination, packet_count):
     try:
         ping_output = subprocess.check_output(["ping", "-n", str(packet_count), destination], universal_newlines=True)
-        return ping_output
+        summary_lines = []
+        summary_started = False
+
+        for line in ping_output.splitlines():
+            if "Ping statistics" in line:
+                summary_started = True
+                summary_lines.append(line)
+            elif summary_started:
+                if line.strip() == "":
+                    break
+                summary_lines.append(line)
+
+        return "\n".join(summary_lines)
     except subprocess.CalledProcessError as e:
         return f"Ping failed with error:\n{e}"
+
 
 def run_traceroute(destination):
     try:
@@ -29,11 +43,7 @@ def run_traceroute(destination):
         return f"Traceroute failed with error:\n{e}"
 
 def run_speedtest():
-    def handler(signum, frame):
-        raise Exception("Speed test interrupted")
-
-    signal.signal(signal.SIGINT, handler)
-
+    signal.signal(signal.SIGINT, signal.SIG_IGN)  # Ignore the interrupt signal
     try:
         st = speedtest.Speedtest()
         st.get_best_server()
@@ -51,56 +61,41 @@ def create_pdf_report(ping_results, traceroute_results, speed_results):
     story = []
     story.append(Paragraph("Network Diagnostics Report", styles['Title']))
 
-    # Ping Results
-    story.append(Spacer(1, 20))
-    story.append(Paragraph("Ping Results:", styles['Heading2']))
-    ping_lines = ping_results.splitlines()
-    for line in ping_lines:
-        story.append(Paragraph(line, styles['Normal']))
-
-    # Traceroute Results
-    story.append(Spacer(1, 20))
-    story.append(Paragraph("Traceroute Results:", styles['Heading2']))
-    traceroute_lines = traceroute_results.splitlines()
-    for line in traceroute_lines:
-        story.append(Paragraph(line, styles['Normal']))
-
-    # SpeedTest Results
-    story.append(Spacer(1, 20))
-    story.append(Paragraph("SpeedTest Results:", styles['Heading2']))
-    speed_lines = speed_results.splitlines()
-    for line in speed_lines:
-        story.append(Paragraph(line, styles['Normal']))
+    for title, content in [("Ping Results:", ping_results), ("Traceroute Results:", traceroute_results), ("SpeedTest Results:", speed_results)]:
+        story.append(Spacer(1, 20))
+        story.append(Paragraph(title, styles['Heading2']))
+        content_paragraphs = content.strip().split('\n')
+        for line in content_paragraphs:
+            story.append(Paragraph(line, styles['Normal']))
 
     doc.build(story)
-    
     buffer.seek(0)
     return buffer
 
+# ... (other imports and functions)
+
 def main():
     destinations = ['8.8.8.8', 'xx.xx.xxxxx.com', 'xxx.xxx.xx.xx']
-    packet_count = 100
+    packet_count = 100  # Reduced packet count for clarity
 
     ping_results = ""
     traceroute_results = ""
-    speed_results = ""
-    
-    
     speed_results = run_speedtest()
 
     for dest in destinations:
-        ping_results += f"\nPing to {dest}:\n"
+        ping_results += f"<b>Ping to {dest}:</b>\n"
         ping_results += run_ping(dest, packet_count)
+        ping_results += "\n\n"  # Add two new lines after each destination
 
-        traceroute_results += f"\nTraceroute to {dest}:\n"
+        traceroute_results += f"<b>Traceroute to {dest}:</b>\n"
         traceroute_results += run_traceroute(dest)
-        
+        traceroute_results += "\n\n"  # Add two new lines after each destination
 
     pdf_buffer = create_pdf_report(ping_results, traceroute_results, speed_results)
-    print("networkDiagx is running in Background..\nPlease Hold on!")
-    
+
+
     with open("network_report.pdf", "wb") as pdf_file:
-        pdf_file.write(pdf_buffer.getvalue())  # Use getvalue() to retrieve the content of BytesIO
+        pdf_file.write(pdf_buffer.getvalue())
         print("PDF report generated: network_report.pdf")
 
 if __name__ == "__main__":
