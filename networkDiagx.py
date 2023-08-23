@@ -78,7 +78,7 @@ def create_pdf_report(ping_results, traceroute_results, speed_results):
     return buffer
 
 def main():
-    destinations = ['8.8.8.8', 'c2.td.commpeak.com', '116.202.64.40']
+    destinations = ['8.8.8.8', 'xx.xx.xxxxx.com', 'xxx.xxx.xx.xx']
     packet_count = 100
 
     ping_results = ""
