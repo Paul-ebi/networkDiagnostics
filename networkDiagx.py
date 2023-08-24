@@ -1,19 +1,23 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[7]:
+# In[1]:
 
 
 print("networkDiagx is running in Background..\nPlease Hold on!")
 import subprocess
 import speedtest
 import signal
+import datetime
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib import colors
+from reportlab.platypus import KeepTogether
+from reportlab.lib.enums import TA_RIGHT
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
+
 
 def run_ping(destination, packet_count):
     try:
@@ -59,7 +63,14 @@ def create_pdf_report(ping_results, traceroute_results, speed_results):
     styles = getSampleStyleSheet()
 
     story = []
-    story.append(Paragraph("Network Diagnostics Report", styles['Title']))
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    report_title = f"Network Diagnostics Report"
+    story.append(Paragraph(report_title, styles['Title']))
+    
+    right_aligned_style = ParagraphStyle(name='RightAligned', parent=styles['Normal'], alignment=TA_RIGHT)
+    timestamp = Paragraph(f"Date: {current_time}", right_aligned_style)
+    story.append(Spacer(1, 10))
+    story.append(KeepTogether([timestamp]))
 
     for title, content in [("Ping Results:", ping_results), ("Traceroute Results:", traceroute_results), ("SpeedTest Results:", speed_results)]:
         story.append(Spacer(1, 20))
@@ -72,10 +83,8 @@ def create_pdf_report(ping_results, traceroute_results, speed_results):
     buffer.seek(0)
     return buffer
 
-# ... (other imports and functions)
-
 def main():
-    destinations = ['8.8.8.8', 'xx.xx.xxxxx.com', 'xxx.xxx.xx.xx']
+    destinations = ['8.8.8.8', 'c2.td.commpeak.com', '116.202.64.40']
     packet_count = 100  # Reduced packet count for clarity
 
     ping_results = ""
