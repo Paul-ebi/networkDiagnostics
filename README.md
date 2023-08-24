@@ -1,7 +1,7 @@
 # networkDiagnostics
 Traceroute, Ping and Speedtest..
 
-This is a fully customizable tool I developed due to my job as a Systems Admin. I am often required to send network diagnostic reports and this can be strressful sometimes especially when there are other things to attend to. 
+This is a fully customizable tool I developed due to my job as an IT Professional. As IT Professionals, we are often required to send network diagnostic reports and this can be strressful sometimes especially when there are other things to attend to. 
 With networkDiagx a network Admin can easily run the program while attending to other things and knows that a report will be generated with current date and time. Simple and easy to use. 
 
 KEY FEATURES
